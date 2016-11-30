@@ -9,7 +9,7 @@ Draft to implement graph signalization of DEAP dataset.
 import os
 import xlrd
 import numpy as np
-import cPickle
+import pickle
 import sys
 import getopt
 import datetime
@@ -78,7 +78,7 @@ def main(argv):
   graph_method = 'xcorr'
   signal_method = 'power'
   output_file = 'out_'+get_current_datetime_str()+'.dat'
-  DEAP_path = '/data/data4/DEAP' # For my computer.
+  DEAP_path = 'E:\DEAP' # For my computer.
 
   if gc.isenabled():
     gc.enable()
@@ -89,12 +89,12 @@ def main(argv):
                                'hd:o:g:s:',
                                ['directory=', 'output=', 'graph=', 'signal='])
   except getopt.GetoptError:
-    print 'draft_dataset.py -g <connectivity_method> -s <signal_method>'
+    print('draft_dataset.py -g <connectivity_method> -s <signal_method>')
     sys.exit(2)
   for opt, arg in opts:
     if opt == '-h':
-      print 'draft_dataset.py -d <dataset_directory> -o <output_prefix>',
-      '-g <connectivity_method> -s <signal_method>'
+      print('draft_dataset.py -d <dataset_directory> -o <output_prefix>',
+      '-g <connectivity_method> -s <signal_method>')
       sys.exit()
     elif opt in ('-d', '--directory'):
       DEAP_path = os.path.abspath(arg)
@@ -104,8 +104,8 @@ def main(argv):
       graph_method = arg
     elif opt in ('-s', '--signal'):
       signal_method = arg
-  print 'Selected connectivity method: %s' % graph_method
-  print 'Selected signal method: %s' % signal_method
+  print('Selected connectivity method: %s' % graph_method)
+  print('Selected signal method: %s' % signal_method)
 
   # Opening DEAP directory
   try:
@@ -117,7 +117,7 @@ def main(argv):
       rating_data[worksheet.cell(0, idx)] = worksheet.col(idx, 1)
     wb.release_resources()
   except IOError:
-    print 'DEAP rating file not found!'
+    print('DEAP rating file not found!')
     sys.exit(2)
 
   # Result data variables
@@ -127,17 +127,18 @@ def main(argv):
 
   # Signal processing per subjects
   for idx in range(nSubject):
-    print 'Current subject No. %d' % (idx+1)
+    print('Current subject No. %d' % (idx+1))
     # pickle load data
     try:
       data_path = os.path.join(DEAP_path, 's%02d.dat' % (idx+1))
-      data_file = cPickle.load(open(data_path, 'rb'))
+      with open(data_path, 'rb') as f:
+          data_file = pickle.load(f, encoding='bytes')
     except IOError:
-      print 'Current DEAP data files not found!'
+      print('Current DEAP data files not found!')
       sys.exit(2)
 
-    data = data_file['data']
-    labels = data_file['labels']
+    data = data_file[b'data']
+    labels = data_file[b'labels']
 
     # baseline signal extraction
     data_baseline = data[np.ix_(range(data.shape[0]),
@@ -182,7 +183,7 @@ def main(argv):
   rs_dict['rs_labels'] = rs_labels
 
   with open(output_file, 'wb') as f:
-    cPickle.dump(rs_dict, f)
+    pickle.dump(rs_dict, f)
 
 
 if __name__ == "__main__":
