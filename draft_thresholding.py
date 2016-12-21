@@ -19,10 +19,10 @@ def get_current_datetime_str():
 
 
 def main(argv):
-  input_file = os.path.abspath('out_20161130190146.dat')
+  input_file = os.path.abspath('out_20161221132234.dat')
   output_file = 'out_thresh_' + get_current_datetime_str() + '.dat'
   graph_thresh_type = 'percentile'
-  graph_thresh_val = 0.5
+  graph_thresh_val = 50
 
   # In progress.
   try:
@@ -81,7 +81,7 @@ def main(argv):
 
   # Label thresholding
   print('Label thresholding process started.')
-  label_thresh = 5
+  label_thresh = np.percentile(labels, 50)
   labels[labels < label_thresh] = 0
   labels[labels >= label_thresh] = 1
   print('Label thresholding process completed.')

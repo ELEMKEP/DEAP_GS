@@ -72,6 +72,23 @@ def sig_timestamp_power(data):
   """
   # function template for signal power
   return np.mean(np.square(data), axis=2)
+  
+
+def normalize(data):
+  """ Normalizing the signal for each dimension.
+  
+  Keyword arguments:
+    data -- signal power
+    
+  Return arguments:
+    signal -- normalized signal
+  """
+  data_s = np.std(data, axis=0)
+  data_m = np.mean(data, axis=0)
+  
+  result_data = (data - data_m) / data_s
+
+  return result_data
 
 
 def main(argv):
@@ -166,7 +183,7 @@ def main(argv):
     # shape: nTrial x nTimestamp, channelDim, channelDim
     g_signal = sig_timestamp_power(data_slice)
     # shape: nTrial x nTimestamp, channelDim
-    g_signal = g_signal - b_signal_ext
+#    g_signal = g_signal - b_signal_ext
 
     # get label
     labels_ext = np.repeat(labels, nTimestamp, axis=0)
@@ -176,6 +193,8 @@ def main(argv):
     rs_signals = np.concatenate((rs_signals, g_signal), axis=0)
     rs_labels = np.concatenate((rs_labels, labels_ext), axis=0)
 
+    
+  rs_signals = normalize(rs_signals)
   # Storing result data in dictionary to save in pickle
   rs_dict = dict()
   rs_dict['rs_graphs'] = rs_graphs
