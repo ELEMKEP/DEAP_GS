@@ -5,25 +5,9 @@
 # Started at 16/07/27.
 # 12/15 revision: changed to suitable for TF 0.12
 #
+# This code refers MNIST example.
+#
 # ==============================================================================
-
-"""Builds the MNIST network.
-
-Implements the inference/loss/training pattern for model building.
-
-1. inference() - Builds the model as far as is required for running the network
-forward to make predictions.
-2. loss() - Adds to the inference model the layers required to generate loss.
-3. training() - Adds to the loss model the Ops required to generate and
-apply gradients.
-
-This file is used by the various "fully_connected_*.py" files and not meant to
-be run.
-"""
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import math
 
 import tensorflow as tf
@@ -31,17 +15,6 @@ import numpy as np
 
 
 def inference_gnn(graphs, signals, output_dim):
-  """Build the MNIST model up to where it may be used for inference.
-
-  Args:
-    graphs: input graphs. #node of all graphs should be same.
-    signals: graph signals corresponds to the graphs.
-    output_dim: #output of network. same as #class.
-
-  Returns:
-    softmax_linear: Output tensor with the computed logits.
-  """
-
   hidden1 = gshiftnn_layer(graphs, signals, 'hidden1')
   hidden2 = gshiftnn_layer(graphs, hidden1, 'hidden2')
   logits = softmax_linear_layer(hidden2, output_dim, 'softmax_linear')
@@ -79,18 +52,6 @@ def sigmoid_layer(signal, output_dim, name_scope):
   return output
 
 def inference_coord_conv(coords, graphs, signals, output_dim, threshold=None):
-  """Build the MNIST model up to where it may be used for inference.
-
-  Args:
-    coords: position of graph nodes. n x 2 matrix.
-    graphs: input graphs. #node of all graphs should be same.
-    signals: graph signals corresponds to the graphs.
-    output_dim: #output of network. same as #class.
-
-  Returns:
-    softmax_linear: Output tensor with the computed logits.
-  """
-
   hidden1 = gcoord_conv_layer(coords, graphs, signals, 'hidden1', threshold)
   hidden2 = gcoord_conv_layer(coords, graphs, hidden1, 'hidden2', threshold)
   logits = softmax_linear_layer(hidden2, output_dim, 'softmax_linear')
@@ -175,27 +136,6 @@ def gshiftnn_layer(gA, signals, name_scope):
 
   return hidden
 
-# signals_list = []
-# for _ in np.arange(0, input_dim.eval()):
-#   signals_list.append(signals)
-# signals_expand = tf.concat(1, # concat dim = 1
-#                           signals_list,
-#                           name='signals_expand')
-#
-# # Weight expansion
-# weights_list = []
-# for _ in np.arange(0, n_records.eval()):
-#   weights_list.append(weight_symm)
-# weight_expand = tf.pack(weights_list,
-#                         axis=2,
-#                         name='weights_expand')
-#
-# biases_list = []
-# for _ in np.arange(0, n_records.eval()):
-#   biases_list.append(biases)
-# biases_expand = tf.pack(biases_list,
-#                         axis=0,
-#                         name='biases_expand')
 
 def softmax_linear_layer(signals, output_dim, name_scope):
   # Graph W - (batch_size, input_dim, input_dim)
@@ -216,15 +156,6 @@ def softmax_linear_layer(signals, output_dim, name_scope):
 
 
 def loss(logits, labels):
-  """Calculates the loss from the logits and the labels.
-
-  Args:
-    logits: Logits tensor, float - [batch_size, NUM_CLASSES].
-    labels: Labels tensor, int32 - [batch_size].
-
-  Returns:
-    loss: Loss tensor of type float.
-  """
   labels = tf.to_int64(labels)
   cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
       logits, labels, name='xentropy')
@@ -233,26 +164,10 @@ def loss(logits, labels):
 
 
 def training(loss, learning_rate):
-  """Sets up the training Ops.
-
-  Creates a summarizer to track the loss over time in TensorBoard.
-
-  Creates an optimizer and applies the gradients to all trainable variables.
-
-  The Op returned by this function is what must be passed to the
-  `sess.run()` call to cause the model to train.
-
-  Args:
-    loss: Loss tensor, from loss().
-    learning_rate: The learning rate to use for gradient descent.
-
-  Returns:
-    train_op: The Op for training.
-  """
   # Add a scalar summary for the snapshot loss.
   tf.summary.scalar('xentropy_mean', loss)
   # Create the gradient descent optimizer with the given learning rate.
-  optimizer = tf.train.AdamOptimizer(learning_rate)
+  optimizer = tf.train.GradientDescentOptimizer(learning_rate)
   # Create a variable to track the global step.
   global_step = tf.Variable(0, name='global_step', trainable=False)
   # Use the optimizer to apply the gradients that minimize the loss
@@ -262,17 +177,6 @@ def training(loss, learning_rate):
 
 
 def evaluation(logits, labels):
-  """Evaluate the quality of the logits at predicting the label.
-
-  Args:
-    logits: Logits tensor, float - [batch_size, NUM_CLASSES].
-    labels: Labels tensor, int32 - [batch_size], with values in the
-      range [0, NUM_CLASSES).
-
-  Returns:
-    A scalar int32 tensor with the number of examples (out of batch_size)
-    that were predicted correctly.
-  """
   # For a classifier model, we can use the in_top_k Op.
   # It returns a bool tensor with shape [batch_size] that is true for
   # the examples where the label is in the top k (here k=1)
